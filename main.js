@@ -1,8 +1,8 @@
 const board = document.getElementById("board");
 const turnDisplay = document.getElementById("turn");
 const promotionPrompt = document.querySelector(".promotion-options-container");
-const defaultPositions = [
-    { row: 0, col: 0, src: 'black-rook' }, { row: 0, col: 1, src: 'black-knight' }, { row: 0, col: 2, src: 'black-bishop' }, { row: 0, col: 3, src: 'black-queen' }, { row: 0, col: 4, src: 'black-king' }, { row: 0, col: 5, src: 'black-bishop' }, { row: 0, col: 6, src: 'black-knight' }, { row: 0, col: 7, src: 'black-rook' },
+var defaultPositions = [
+    { row: 0, col: 0, src: 'black-rook', turn:0 }, { row: 0, col: 1, src: 'black-knight' }, { row: 0, col: 2, src: 'black-bishop' }, { row: 0, col: 3, src: 'black-queen' }, { row: 0, col: 4, src: 'black-king' }, { row: 0, col: 5, src: 'black-bishop' }, { row: 0, col: 6, src: 'black-knight' }, { row: 0, col: 7, src: 'black-rook' },
     { row: 1, col: 0, src: 'black-pawn' }, { row: 1, col: 1, src: 'black-pawn' }, { row: 1, col: 2, src: 'black-pawn' }, { row: 1, col: 3, src: 'black-pawn' }, { row: 1, col: 4, src: 'black-pawn' }, { row: 1, col: 5, src: 'black-pawn' }, { row: 1, col: 6, src: 'black-pawn' }, { row: 1, col: 7, src: 'black-pawn' },
     { row: 6, col: 0, src: 'white-pawn' }, { row: 6, col: 1, src: 'white-pawn' }, { row: 6, col: 2, src: 'white-pawn' }, { row: 6, col: 3, src: 'white-pawn' }, { row: 6, col: 4, src: 'white-pawn' }, { row: 6, col: 5, src: 'white-pawn' }, { row: 6, col: 6, src: 'white-pawn' }, { row: 6, col: 7, src: 'white-pawn' },
     { row: 7, col: 0, src: 'white-rook' }, { row: 7, col: 1, src: 'white-knight' }, { row: 7, col: 2, src: 'white-bishop' }, { row: 7, col: 3, src: 'white-queen' }, { row: 7, col: 4, src: 'white-king' }, { row: 7, col: 5, src: 'white-bishop' }, { row: 7, col: 6, src: 'white-knight' }, { row: 7, col: 7, src: 'white-rook' },
@@ -18,7 +18,6 @@ const CONSTS = {
     DIR_TOP_BISP: [-1, -1, +1, -1],
     DIR_BOT_BISP: [-1, +1, +1, +1],
 }
-
 let highlightedSquares = [];
 let piecesWithListener = [];
 let squaresWithListener = [];
@@ -30,6 +29,7 @@ let kingInCheck = false;
 let [whiteKingHasMoved, whiteQRookHasMoved, whiteKRookHasMoved] = [false, false, false];
 let [blackKingHasMoved, blackQRookHasMoved, blackKRookHasMoved] = [false, false, false];
 let turn = 0;
+
 for (row = CONSTS.MIN_INDEX; row <= CONSTS.MAX_INDEX; ++row) {
     for (col = CONSTS.MIN_INDEX; col <= CONSTS.MAX_INDEX; ++col) {
         let square = document.createElement('div');
@@ -85,6 +85,13 @@ function clearHighlight(all=false) {
 
 async function placePiece(currX, currY, targX, targY, switchT=true) {
     let piece = document.getElementById(`pc-${currY}-${currX}`);
+    for(let i=0; i<currPositions.length; ++i){
+      if(currPositions[i].row == currY && currPositions[i].col == currX){
+        currPositions[i].row = targY;
+        currPositions[i].col = targX;
+        break;
+      }
+    }
     let initSquare = document.getElementById(`sq-${currY}-${currX}`);
     let destSquare = document.getElementById(`sq-${targY}-${targX}`);
     
@@ -121,6 +128,8 @@ async function placePiece(currX, currY, targX, targY, switchT=true) {
         destSquare.appendChild(piece);
         initSquare.innerHTML = '';
         switchT ? switchTurn() : null;
+        currPositions[0].turn = turn;
+        localStorage.currPositions = JSON.stringify(currPositions);
     }, CONSTS.MOVE_DELAY);
 }
 
@@ -501,6 +510,10 @@ function isGameOver(currentPlayer) {
 
 
 function main() {
+    if(localStorage.currPositions !== undefined && localStorage.currPositions !== ""){
+      currPositions = JSON.parse(localStorage.currPositions);
+      turn = currPositions[0].turn;
+    }
     currPositions.forEach(pos => {
         let img = document.createElement('img');
         img.src = `./images/${pos.src}.png`;
@@ -527,7 +540,11 @@ function main() {
         initSquare.appendChild(img);
     });
 
-    addPieceClickListener("white");
+    //switchTurn(); -> Might be easier to modify this function.
+    isKingInCheck(["white", "black"][currPositions[0].turn]);
+    isGameOver(["white", "black"][currPositions[0].turn]);
+    turnDisplay.innerHTML = currPositions[0].turn == 0 ? "White" : "Black";
+    addPieceClickListener(["white", "black"][currPositions[0].turn]);
 }
 
 window.onload = main;
