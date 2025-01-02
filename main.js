@@ -506,6 +506,11 @@ function isGameOver(currentPlayer) {
         alert(`Draw by Stalemate.`);
     // More Endgame conditions coming.
 }
+
+function resetGame() {
+    localStorage.currPositions = "";
+    location.reload();
+}
 // Other functionality --END--
 
 
